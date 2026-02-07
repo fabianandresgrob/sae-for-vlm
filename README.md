@@ -61,6 +61,25 @@ See Appendix D: Benchmark attached to the article to learn more.
 
 
 We use the implementation of sparse autoencoders available at https://github.com/saprmarks/dictionary_learning.
+
+### Alternative: HuggingFace ImageNet Streaming
+If you don't have ImageNet on disk, you can stream it from HuggingFace. First, accept the [ILSVRC/imagenet-1k](https://huggingface.co/datasets/ILSVRC/imagenet-1k) license and log in:
+```bash
+huggingface-cli login
+```
+Then run the full pipeline (activation extraction + SAE training):
+```bash
+./train_sae_from_hf.sh
+```
+Or extract activations individually with `save_activations_hf.py`:
+```bash
+# Training set: 2 random patch tokens per image
+python save_activations_hf.py --split train --token_mode random_k --n_random_tokens 2
+
+# Validation set: CLS token only
+python save_activations_hf.py --split validation --token_mode cls
+```
+
 ### Citation
 ```bibtex
 @article{pach2025sparse,

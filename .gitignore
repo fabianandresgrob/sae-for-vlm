@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Environment
+.venv/
+.python-version
+
+# IDE
+.vscode/
+.idea/
+
+# Data and model outputs
+activations_dir/
+checkpoints_dir/
+embeddings_dir/
+llava_results_dir/
+images_imagenet/
+
+# OS
+.DS_Store
+
+# Claude Code
+.claude.local.md
