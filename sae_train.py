@@ -51,6 +51,7 @@ def train_sae(args):
 
     activation_dim = sample.shape[1]
     dictionary_size = args.expansion_factor * activation_dim
+    dataset_name = Path(args.activations_dir).name
 
     trainers = {
         'jumprelu': JumpReluTrainer,
@@ -67,6 +68,8 @@ def train_sae(args):
     #     'top_k': AutoEncoderTopK,
     # }
 
+    wandb_name = f"{args.sae_model}_k{args.k}_x{args.expansion_factor}_{dataset_name}"
+
     trainer_cfg = {
         "trainer": trainers[args.sae_model],
         "activation_dim": activation_dim,
@@ -74,6 +77,7 @@ def train_sae(args):
         "lr": args.lr,
         "device": args.device,
         "steps": args.steps,
+        "wandb_name": wandb_name,
         "layer": "",
         "lm_name": "",
         "submodule_name": ""
@@ -96,7 +100,6 @@ def train_sae(args):
     if args.sae_model == "matroyshka_batch_top_k":
         trainer_cfg["group_fractions"] = args.group_fractions
 
-    dataset_name = Path(args.activations_dir).name
     save_dir = Path(args.checkpoints_dir) / f"{dataset_name}_{args.sae_model}_{args.k}_x{args.expansion_factor}"
     save_dir.mkdir(parents=True, exist_ok=True)
 
@@ -105,8 +108,8 @@ def train_sae(args):
         val_data=val_dataloader,
         trainer_configs=[trainer_cfg],
         use_wandb=True,
-        wandb_entity="mateuszpach",
-        wandb_project="Clip SAE",
+        wandb_entity="fabian-grob-technical-university-of-munich",
+        wandb_project="sae-for-vlm",
         steps=args.steps,
         save_steps=[x for x in range(0, args.steps, args.save_steps)],
         save_dir=save_dir,
