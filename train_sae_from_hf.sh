@@ -10,7 +10,7 @@ set -e
 MODEL_NAME="clip-vit-large-patch14-336"
 LAYER=22
 POINT="post_mlp_residual"
-ACTIVATIONS_BASE="./activations_dir/raw/hf"
+ACTIVATIONS_BASE="${ACTIVATIONS_BASE:-./activations_dir/raw/hf}"
 TRAIN_DIR="${ACTIVATIONS_BASE}/imagenet_train_activations_${MODEL_NAME}_${LAYER}_${POINT}"
 VAL_DIR="${ACTIVATIONS_BASE}/imagenet_validation_activations_${MODEL_NAME}_${LAYER}_${POINT}"
 
@@ -40,21 +40,24 @@ python save_activations_hf.py \
     --save_every 10000
 
 # Step 3: Train BatchTopK SAE
-# Input dim: 1024, expansion: 16x -> dict_size = 16384
-# LR = 16 / (125 * sqrt(16384)) = 0.001
-echo "=== Step 3: Training BatchTopK SAE ==="
+EXPANSION=8
+ACTIVATION_DIM=1024
+DICT_SIZE=$((EXPANSION * ACTIVATION_DIM))
+# LR formula: expansion / (125 * sqrt(dict_size))
+LR=$(python3 -c "import math; print(${EXPANSION} / (125 * math.sqrt(${DICT_SIZE})))")
+echo "=== Step 3: Training BatchTopK SAE (x${EXPANSION}, dict_size=${DICT_SIZE}, lr=${LR}) ==="
 python sae_train.py \
     --sae_model batch_top_k \
     --activations_dir "${TRAIN_DIR}" \
     --val_activations_dir "${VAL_DIR}" \
-    --checkpoints_dir "./checkpoints_dir/batch_top_k_20_x16" \
-    --expansion_factor 16 \
+    --checkpoints_dir "./checkpoints_dir/batch_top_k_20_x${EXPANSION}" \
+    --expansion_factor ${EXPANSION} \
     --steps 100000 \
     --save_steps 20000 \
     --log_steps 1000 \
     --batch_size 4096 \
     --k 20 \
-    --lr 0.001 \
+    --lr ${LR} \
     --auxk_alpha 0.03 \
     --decay_start 99999
 
