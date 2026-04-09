@@ -77,6 +77,10 @@ def parse_args():
                         help="Stop after processing N images total")
     parser.add_argument("--num_workers", type=int, default=4,
                         help="DataLoader worker processes for shard decoding")
+    parser.add_argument("--resume", action="store_true",
+                        help="Resume from existing chunks in the output directory. "
+                             "Counts existing .pt files, estimates shards already consumed, "
+                             "and skips ahead before resuming extraction.")
     parser.add_argument("--device", type=str,
                         default="cuda:0" if torch.cuda.is_available() else "cpu")
     return parser.parse_args()
@@ -129,11 +133,6 @@ def main():
     if args.max_shards is not None:
         shard_paths = shard_paths[:args.max_shards]
 
-    log.info(
-        f"Using {len(shard_paths)} shards "
-        f"(shard_start={args.shard_start}, max_shards={args.max_shards})"
-    )
-
     # Output directory follows existing naming convention
     output_subdir = os.path.join(
         args.output_dir,
@@ -142,6 +141,32 @@ def main():
     )
     Path(output_subdir).mkdir(parents=True, exist_ok=True)
     log.info(f"Output directory: {output_subdir}")
+
+    # Resume: skip shards already consumed in a previous run
+    images_to_skip = 0
+    save_count = 0
+    if args.resume:
+        existing = sorted(glob.glob(os.path.join(output_subdir, "*.pt")))
+        save_count = len(existing)
+        if save_count > 0:
+            images_already_processed = save_count * args.save_every
+            # Each shard has ~10k images; back off 2 shards to avoid missing any images
+            # at the boundary of the last completed chunk.
+            APPROX_IMAGES_PER_SHARD = 9500
+            shards_to_skip = max(0, images_already_processed // APPROX_IMAGES_PER_SHARD - 2)
+            shard_paths = shard_paths[shards_to_skip:]
+            images_to_skip = images_already_processed - shards_to_skip * APPROX_IMAGES_PER_SHARD
+            log.info(
+                f"Resuming: {save_count} existing chunks, "
+                f"skipping {shards_to_skip} shards + {images_to_skip} images"
+            )
+        else:
+            log.info("Resume requested but no existing chunks found; starting from scratch.")
+
+    log.info(
+        f"Using {len(shard_paths)} shards "
+        f"(shard_start={args.shard_start}, max_shards={args.max_shards})"
+    )
 
     # Load CLIP and attach activation hook
     log.info(f"Loading model openai/{args.model_name} on {args.device}")
@@ -166,7 +191,6 @@ def main():
 
     activations_buffer = []
     images_processed = 0
-    save_count = 0
     start_time = time.time()
 
     for pil_images in loader:
@@ -174,6 +198,11 @@ def main():
             continue
         if args.max_images is not None and images_processed >= args.max_images:
             break
+
+        # Fast-forward past images already saved in a previous run (no GPU inference)
+        if images_to_skip > 0:
+            images_to_skip -= len(pil_images)
+            continue
 
         pil_images = [img.convert("RGB") for img in pil_images]
         inputs = clip.processor(images=pil_images, return_tensors="pt", padding=True)
