@@ -11,6 +11,7 @@ MODEL_NAME="clip-vit-large-patch14-336"
 LAYER=22
 POINT="post_mlp_residual"
 ACTIVATIONS_BASE="${ACTIVATIONS_BASE:-./activations_dir/raw/hf}"
+CHECKPOINTS_BASE="${CHECKPOINTS_BASE:-./checkpoints_dir}"
 TRAIN_DIR="${ACTIVATIONS_BASE}/imagenet_train_activations_${MODEL_NAME}_${LAYER}_${POINT}"
 VAL_DIR="${ACTIVATIONS_BASE}/imagenet_validation_activations_${MODEL_NAME}_${LAYER}_${POINT}"
 
@@ -50,7 +51,7 @@ python sae_train.py \
     --sae_model batch_top_k \
     --activations_dir "${TRAIN_DIR}" \
     --val_activations_dir "${VAL_DIR}" \
-    --checkpoints_dir "./checkpoints_dir/batch_top_k_20_x${EXPANSION}" \
+    --checkpoints_dir "${CHECKPOINTS_BASE}/batch_top_k_20_x${EXPANSION}" \
     --expansion_factor ${EXPANSION} \
     --steps 100000 \
     --save_steps 20000 \
