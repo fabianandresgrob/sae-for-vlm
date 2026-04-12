@@ -182,21 +182,25 @@ def main():
         .to_tuple("jpg;png;jpeg;webp", handler=wds.warn_and_continue)
     )
 
+    num_workers = min(args.num_workers, len(shard_paths))
+    log.info(f"Using {num_workers} dataloader workers for {len(shard_paths)} shards")
     loader = wds.WebLoader(
         dataset,
         batch_size=args.batch_size,
-        num_workers=args.num_workers,
+        num_workers=num_workers,
         collate_fn=lambda samples: [s[0] for s in samples if s[0] is not None],
     )
 
     activations_buffer = []
-    images_processed = 0
+    images_processed_session = 0  # images processed in this session (excludes resumed chunks)
+    images_already_saved = save_count * args.save_every  # from completed chunks in prior runs
+    initial_save_count = save_count  # chunks that existed before this session
     start_time = time.time()
 
     for pil_images in loader:
         if not pil_images:
             continue
-        if args.max_images is not None and images_processed >= args.max_images:
+        if args.max_images is not None and images_processed_session >= args.max_images:
             break
 
         # Fast-forward past images already saved in a previous run (no GPU inference)
@@ -215,12 +219,13 @@ def main():
         pooled = pool_activations(act_tensor, args.token_mode, args.n_random_tokens)
         activations_buffer.append(pooled)
 
-        images_processed += len(pil_images)
+        images_processed_session += len(pil_images)
         elapsed = time.time() - start_time
-        img_per_sec = images_processed / elapsed if elapsed > 0 else 0
-        log.info(f"Processed {images_processed} images ({img_per_sec:.1f} img/s)")
+        img_per_sec = images_processed_session / elapsed if elapsed > 0 else 0
+        total = images_already_saved + images_processed_session
+        log.info(f"Processed {total} images total ({images_processed_session} this session, {img_per_sec:.1f} img/s)")
 
-        if images_processed >= args.save_every * (save_count + 1):
+        if images_processed_session >= args.save_every * (save_count - initial_save_count + 1):
             save_chunk(activations_buffer, save_count, args, output_subdir)
             activations_buffer = []
             save_count += 1

@@ -36,9 +36,6 @@ LAYER=22
 POINT="post_mlp_residual"
 # -------------------------
 
-cd "$(dirname "$0")"
-mkdir -p logs
-
 source "${VENV_PATH}/bin/activate"
 
 CC3M_TRAIN_OUT="${ACTIVATIONS_BASE}/cc3m_train_activations_${MODEL_NAME}_${LAYER}_${POINT}"

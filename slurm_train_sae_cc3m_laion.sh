@@ -23,9 +23,6 @@ COMBINED_TRAIN_DIR="${ACTIVATIONS_BASE}/combined_train"
 COMBINED_VAL_DIR="${ACTIVATIONS_BASE}/combined_val"
 # -------------------------
 
-cd "$(dirname "$0")"
-mkdir -p logs
-
 source "${VENV_PATH}/bin/activate"
 
 EXPANSION=8
