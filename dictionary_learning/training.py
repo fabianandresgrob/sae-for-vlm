@@ -118,7 +118,7 @@ def validation(val_data, autocast_dtype, trainer, log_queue, norm_factor):
 
         for act in val_data:
             act = act.detach().clone()
-            act = act.to(dtype=autocast_dtype)
+            act = act.to(dtype=autocast_dtype, device=trainer.device)
             act /= norm_factor
             with t.no_grad():
                 f = trainer.ae.encode(act, use_threshold=use_threshold)
@@ -247,7 +247,7 @@ def trainSAE(
     for step, act in enumerate(tqdm(cycle(data), total=steps)):
 
         act = act.detach().clone()  # TODO: maybe remove if activation dataset modified
-        act = act.to(dtype=autocast_dtype)
+        act = act.to(dtype=autocast_dtype, device=trainers[0].device)
 
         if normalize_activations:
             act /= norm_factor
