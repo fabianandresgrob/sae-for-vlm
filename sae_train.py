@@ -40,10 +40,10 @@ def get_args_parser():
     return parser
 
 def train_sae(args):
-    dataset = ActivationsDataset(args.activations_dir, device=torch.device(args.device))
+    dataset = ActivationsDataset(args.activations_dir, device=torch.device("cpu"))
     dataloader = DataLoader(dataset, batch_size=args.batch_size, shuffle=True)
 
-    val_dataset = ActivationsDataset(args.val_activations_dir, device=torch.device(args.device))
+    val_dataset = ActivationsDataset(args.val_activations_dir, device=torch.device("cpu"))
     val_dataloader = DataLoader(val_dataset, batch_size=args.batch_size, shuffle=False)
 
     sample = next(iter(dataloader))
