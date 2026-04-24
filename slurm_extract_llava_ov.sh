@@ -32,6 +32,10 @@ POINT="post_mlp_residual"
 source "${VENV_PATH}/activate.sh"
 cd "${REPO_PATH}"
 
+export HF_HUB_OFFLINE=1
+export TRANSFORMERS_OFFLINE=1
+export HF_DATASETS_OFFLINE=1
+
 mkdir -p logs
 mkdir -p "${OUTPUT_DIR}"
 
