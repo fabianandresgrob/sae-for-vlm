@@ -18,7 +18,7 @@ NUM_NODES=${NUM_NODES:-1}
 TOTAL_SHARDS=$((NUM_NODES * 4))
 BASE_SHARD=$((NODE_ID * 4))
 
-VENV_PATH="$PROJECT/grob1/sae-for-vlm/.venv"
+VENV_PATH="$PROJECT/grob1/LLaVA/sc_venv_template"
 REPO_PATH="$PROJECT/grob1/sae-for-vlm"
 
 DATA_DIR="/e/scratch/taco-vlm/kim16/LLaVA-OneVision-1.5-Instruct-Data"
@@ -29,7 +29,7 @@ MODEL_NAME="clip-vit-large-patch14-336"
 LAYER=22
 POINT="post_mlp_residual"
 
-source "${VENV_PATH}/bin/activate"
+source "${VENV_PATH}/activate.sh"
 cd "${REPO_PATH}"
 
 mkdir -p logs
