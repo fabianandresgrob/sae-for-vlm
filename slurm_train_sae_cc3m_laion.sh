@@ -2,28 +2,30 @@
 #SBATCH --job-name=train-sae-cc3m-laion
 #SBATCH --output=logs/%x_%j.out
 #SBATCH --error=logs/%x_%j.err
-#SBATCH --gres=gpu:1
-#SBATCH --cpus-per-task=4
-#SBATCH --mem=96G
+#SBATCH --nodes=1
+#SBATCH --gres=gpu:4
+#SBATCH --cpus-per-task=72
 #SBATCH --time=12:00:00
-
-# TODO: Adjust partition/account for your cluster
-# #SBATCH --partition=gpu
-# #SBATCH --account=your_account
+#SBATCH --partition=booster
+#SBATCH --account=taco-vlm
 
 set -e
 
-# ---- Configure these ----
-VENV_PATH=".venv"
+VENV_PATH="$PROJECT/grob1/LLaVA/sc_venv_template"
 
-SAE_EXPERIMENT_DIR="$SCRATCH/sae/cc3m_laion_clip_l22"
+SAE_EXPERIMENT_DIR="$SCRATCH/grob1/sae/cc3m_laion_clip_l22"
 ACTIVATIONS_BASE="${SAE_EXPERIMENT_DIR}/activations"
 CHECKPOINTS_BASE="${SAE_EXPERIMENT_DIR}/checkpoints"
 COMBINED_TRAIN_DIR="${ACTIVATIONS_BASE}/combined_train"
 COMBINED_VAL_DIR="${ACTIVATIONS_BASE}/combined_val"
 # -------------------------
 
-source "${VENV_PATH}/bin/activate"
+source "${VENV_PATH}/activate.sh"
+cd "$PROJECT/grob1/sae-for-vlm"
+
+export HF_HUB_OFFLINE=1
+export TRANSFORMERS_OFFLINE=1
+export HF_DATASETS_OFFLINE=1
 
 EXPANSION=8
 ACTIVATION_DIM=1024

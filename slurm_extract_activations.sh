@@ -24,7 +24,7 @@ LAION_DIR="${DATASETS_BASE}/laion400m/laion400m-data"
 LAION_TRAIN_SHARDS=200
 LAION_VAL_SHARDS=10
 
-SAE_EXPERIMENT_DIR="$SCRATCH/sae/cc3m_laion_clip_l22"
+SAE_EXPERIMENT_DIR="$SCRATCH/grob1/sae/cc3m_laion_clip_l22"
 ACTIVATIONS_BASE="${SAE_EXPERIMENT_DIR}/activations"
 COMBINED_TRAIN_DIR="${ACTIVATIONS_BASE}/combined_train"
 COMBINED_VAL_DIR="${ACTIVATIONS_BASE}/combined_val"
@@ -78,7 +78,8 @@ else
         --model_name "${MODEL_NAME}" \
         --layer ${LAYER} \
         --attachment_point "${POINT}" \
-        --token_mode cls \
+        --token_mode random_k \
+        --n_random_tokens 2 \
         --batch_size 128 \
         --num_workers 8 \
         --save_every 10000 \
@@ -122,7 +123,8 @@ else
         --model_name "${MODEL_NAME}" \
         --layer ${LAYER} \
         --attachment_point "${POINT}" \
-        --token_mode cls \
+        --token_mode random_k \
+        --n_random_tokens 2 \
         --batch_size 128 \
         --num_workers 8 \
         --save_every 10000 \
