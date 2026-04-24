@@ -59,6 +59,9 @@ def parse_args():
                         help="Index of this GPU worker (0-indexed)")
     parser.add_argument("--num_shards", type=int, default=1,
                         help="Total number of parallel GPU workers")
+    parser.add_argument("--row_offset", type=int, default=0,
+                        help="Row offset within each stride window. "
+                             "0 for train (rows 0, S, 2S, ...), 1 for val (rows 1, S+1, 2S+1, ...)")
     return parser.parse_args()
 
 
@@ -112,10 +115,14 @@ def save_chunk(buffer: list, save_count: int, output_dir: str, args) -> None:
     log.info(f"Saved chunk {save_count + 1}: {chunk.shape} -> {path}")
 
 
-def iter_parquet_images(subdir: Path, n_target: int):
+def iter_parquet_images(subdir: Path, n_target: int, row_offset: int = 0):
     """
     Yield PIL images from parquet files, sampling approximately n_target images
     evenly across all rows using a fixed stride.
+
+    row_offset shifts which row within each stride window is selected:
+      0 → rows 0, S, 2S, ...   (train)
+      1 → rows 1, S+1, 2S+1, ... (val, non-overlapping with train)
     """
     import pyarrow.parquet as pq
 
@@ -128,7 +135,7 @@ def iter_parquet_images(subdir: Path, n_target: int):
     for f in files:
         table = pq.read_table(f, columns=["image"])
         for row_idx in range(len(table)):
-            if global_idx % stride == 0 and emitted < n_target:
+            if global_idx >= row_offset and (global_idx - row_offset) % stride == 0 and emitted < n_target:
                 img = decode_image(table["image"][row_idx].as_py())
                 if img is not None:
                     yield img
@@ -149,7 +156,7 @@ def extract_subdataset(subdir: Path, n_target: int, output_dir: str, clip, regis
     start = time.time()
 
     batch = []
-    for img in iter_parquet_images(subdir, n_target):
+    for img in iter_parquet_images(subdir, n_target, row_offset=args.row_offset):
         batch.append(img)
         if len(batch) < args.batch_size:
             continue

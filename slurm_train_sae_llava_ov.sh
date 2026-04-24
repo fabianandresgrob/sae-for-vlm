@@ -17,6 +17,7 @@ REPO_PATH="$PROJECT/grob1/sae-for-vlm"
 
 SAE_EXPERIMENT_DIR="$SCRATCH/grob1/sae/llava_ov_clip_l22"
 ACTIVATIONS_DIR="${SAE_EXPERIMENT_DIR}/activations/llava_ov_train"
+VAL_ACTIVATIONS_DIR="${SAE_EXPERIMENT_DIR}/activations/llava_ov_val"
 CHECKPOINTS_DIR="${SAE_EXPERIMENT_DIR}/checkpoints"
 
 source "${VENV_PATH}/activate.sh"
@@ -32,11 +33,13 @@ DICT_SIZE=$((EXPANSION * ACTIVATION_DIM))
 LR=$(python3 -c "import math; print(${EXPANSION} / (125 * math.sqrt(${DICT_SIZE})))")
 
 echo "=== Training BatchTopK SAE (x${EXPANSION}, dict_size=${DICT_SIZE}, lr=${LR}) ==="
-echo "Activations: ${ACTIVATIONS_DIR} ($(ls "${ACTIVATIONS_DIR}"/*.pt 2>/dev/null | wc -l) chunks)"
+echo "Train: ${ACTIVATIONS_DIR} ($(ls "${ACTIVATIONS_DIR}"/*.pt 2>/dev/null | wc -l) chunks)"
+echo "Val:   ${VAL_ACTIVATIONS_DIR} ($(ls "${VAL_ACTIVATIONS_DIR}"/*.pt 2>/dev/null | wc -l) chunks)"
 
 python sae_train.py \
     --sae_model batch_top_k \
     --activations_dir "${ACTIVATIONS_DIR}" \
+    --val_activations_dir "${VAL_ACTIVATIONS_DIR}" \
     --checkpoints_dir "${CHECKPOINTS_DIR}" \
     --expansion_factor ${EXPANSION} \
     --steps 100000 \
