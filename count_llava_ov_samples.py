@@ -59,16 +59,22 @@ def main():
                         help="Max images per subdataset (default: no cap)")
     parser.add_argument("--floor", type=int, default=1000,
                         help="Min images per subdataset if it has >= floor samples")
+    parser.add_argument("--exclude", nargs="*", default=[],
+                        help="Subdataset names to exclude (e.g. --exclude dvqa-part-00-of-10)")
     args = parser.parse_args()
 
     base = Path(args.data_dir)
     subdirs = sorted([d for d in base.iterdir() if d.is_dir()])
 
+    exclude = set(args.exclude)
     print(f"Scanning {len(subdirs)} subdirectories in {base} ...\n")
 
     counts = {}
     skipped = {}
     for i, subdir in enumerate(subdirs):
+        if subdir.name in exclude:
+            print(f"  [{i+1:3d}/{len(subdirs)}] {subdir.name:<50s} {'(excluded)':>20s}")
+            continue
         files = get_parquet_files(subdir)
         if not files:
             skipped[subdir.name] = 0
