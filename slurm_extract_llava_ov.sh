@@ -22,7 +22,7 @@ VENV_PATH="$PROJECT/grob1/sae-for-vlm/.venv"
 REPO_PATH="$PROJECT/grob1/sae-for-vlm"
 
 DATA_DIR="/e/scratch/taco-vlm/kim16/LLaVA-OneVision-1.5-Instruct-Data"
-SAMPLING_PLAN="${DATA_DIR}/sampling_plan.csv"
+SAMPLING_PLAN="${REPO_PATH}/sampling_plan.csv"
 OUTPUT_DIR="$SCRATCH/grob1/sae/llava_ov_clip_l22/activations/llava_ov_train"
 
 MODEL_NAME="clip-vit-large-patch14-336"
