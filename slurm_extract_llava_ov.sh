@@ -54,7 +54,8 @@ for i in 0 1 2 3; do
             --model_name "${MODEL_NAME}" \
             --layer ${LAYER} \
             --attachment_point "${POINT}" \
-            --token_mode cls \
+            --token_mode random_k \
+            --n_random_tokens 2 \
             --batch_size 128 \
             --save_every 10000 \
             --shard_id ${SHARD_ID} \
