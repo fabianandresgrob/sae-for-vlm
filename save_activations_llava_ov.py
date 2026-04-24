@@ -104,7 +104,8 @@ def save_chunk(buffer: list, save_count: int, output_dir: str, args) -> None:
     chunk = torch.cat(buffer, dim=0)
     fname = (
         f"llava_ov_train_activations_{args.model_name}"
-        f"_{args.layer}_{args.attachment_point}_part{save_count + 1}.pt"
+        f"_{args.layer}_{args.attachment_point}"
+        f"_shard{args.shard_id:02d}_part{save_count + 1}.pt"
     )
     path = os.path.join(output_dir, fname)
     torch.save(torch.tensor(chunk.cpu().numpy()), path)
