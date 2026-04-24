@@ -118,9 +118,6 @@ class CLIPEncoderLayerPostMlpResidual(nn.Module):
         else:
             self.register[f'post_mlp_residual_{self.layer}'].append(hidden_states.detach().cpu())
 
-        outputs = (hidden_states,)
-
         if output_attentions:
-            outputs += (attn_weights,)
-
-        return outputs
+            return (hidden_states, attn_weights)
+        return hidden_states
