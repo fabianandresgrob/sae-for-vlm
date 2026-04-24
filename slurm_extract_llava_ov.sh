@@ -11,6 +11,13 @@
 
 set -e
 
+# NODE_ID and NUM_NODES are passed via --export when submitting multiple jobs.
+# For a single-node run, defaults are NODE_ID=0, NUM_NODES=1.
+NODE_ID=${NODE_ID:-0}
+NUM_NODES=${NUM_NODES:-1}
+TOTAL_SHARDS=$((NUM_NODES * 4))
+BASE_SHARD=$((NODE_ID * 4))
+
 VENV_PATH="$PROJECT/grob1/sae-for-vlm/.venv"
 REPO_PATH="$PROJECT/grob1/sae-for-vlm"
 
@@ -28,13 +35,14 @@ cd "${REPO_PATH}"
 mkdir -p logs
 mkdir -p "${OUTPUT_DIR}"
 
-echo "=== Extracting LLaVA-OV activations (4 GPUs) ==="
+echo "=== Extracting LLaVA-OV activations (node ${NODE_ID}/${NUM_NODES}, shards ${BASE_SHARD}-$((BASE_SHARD+3))/${TOTAL_SHARDS}) ==="
 echo "Output: ${OUTPUT_DIR}"
 
 for i in 0 1 2 3; do
+    SHARD_ID=$((BASE_SHARD + i))
     srun --exclusive -n 1 --gres=gpu:1 --cpus-per-task=72 \
-        --output="logs/%x_%j_gpu${i}.out" \
-        --error="logs/%x_%j_gpu${i}.err" \
+        --output="logs/%x_%j_shard${SHARD_ID}.out" \
+        --error="logs/%x_%j_shard${SHARD_ID}.err" \
         python save_activations_llava_ov.py \
             --data_dir "${DATA_DIR}" \
             --sampling_plan "${SAMPLING_PLAN}" \
@@ -45,10 +53,10 @@ for i in 0 1 2 3; do
             --token_mode cls \
             --batch_size 128 \
             --save_every 10000 \
-            --shard_id ${i} \
-            --num_shards 4 \
+            --shard_id ${SHARD_ID} \
+            --num_shards ${TOTAL_SHARDS} \
             --resume &
 done
 
 wait
-echo "=== Done. Chunks: $(ls "${OUTPUT_DIR}"/*.pt 2>/dev/null | wc -l) ==="
+echo "=== Node ${NODE_ID} done. Total chunks so far: $(ls "${OUTPUT_DIR}"/*.pt 2>/dev/null | wc -l) ==="
