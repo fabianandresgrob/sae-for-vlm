@@ -88,19 +88,22 @@ class CLIPEncoderLayerPostMlpResidual(nn.Module):
     def forward(
         self,
         hidden_states: torch.Tensor,
-        attention_mask: torch.Tensor,
-        causal_attention_mask: torch.Tensor,
+        attention_mask: Optional[torch.Tensor] = None,
+        causal_attention_mask: Optional[torch.Tensor] = None,
         output_attentions: Optional[bool] = False,
+        **kwargs,
     ) -> Tuple[torch.FloatTensor]:
         residual = hidden_states
 
         hidden_states = self.layer_norm1(hidden_states)
-        hidden_states, attn_weights = self.self_attn(
+        attn_kwargs = dict(
             hidden_states=hidden_states,
             attention_mask=attention_mask,
-            causal_attention_mask=causal_attention_mask,
             output_attentions=output_attentions,
         )
+        if causal_attention_mask is not None:
+            attn_kwargs["causal_attention_mask"] = causal_attention_mask
+        hidden_states, attn_weights = self.self_attn(**attn_kwargs)
         hidden_states = residual + hidden_states
 
         residual = hidden_states
