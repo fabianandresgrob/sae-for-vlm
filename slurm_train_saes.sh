@@ -45,7 +45,7 @@ train_sae() {
     local CKPT_DIR=$4
     local NAME=$5
 
-    srun --exclusive -n 1 --gres=gpu:1 --cpus-per-task=72 \
+    CUDA_VISIBLE_DEVICES=${GPU} srun --exclusive -n 1 --gres=gpu:1 --cpus-per-task=72 \
         --output="logs/%x_%j_${NAME}.out" \
         --error="logs/%x_%j_${NAME}.err" \
         python sae_train.py \
@@ -62,7 +62,7 @@ train_sae() {
             --lr ${LR} \
             --auxk_alpha 0.03 \
             --decay_start 99999 \
-            --device "cuda:${GPU}" &
+            --device "cuda:0" &
 }
 
 echo "=== Training SAEs (x${EXPANSION}, dict_size=${DICT_SIZE}, lr=${LR}) ==="
